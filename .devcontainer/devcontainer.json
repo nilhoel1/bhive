@@ -32,6 +32,8 @@
 			]
 		}
 	},
+	"capAdd": ["SYS_PTRACE"],
+  "securityOpt": ["seccomp=unconfined"],
 	"appPort": [
 		10245,
 		8765,
