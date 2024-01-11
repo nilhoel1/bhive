@@ -1,6 +1,7 @@
 #ifndef HARNESS_H
 #define HARNESS_H
 
+#include <stdint.h>
 #define HARNESS_ITERS 16
 
 // use this to create a shm fd for measurement

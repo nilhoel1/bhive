@@ -11,7 +11,7 @@ def disassemble(hex, output_intel_syntax):
 
   syntax_id = 1 if output_intel_syntax else 0
 
-  cmd = 'echo %s | llvm-mc -disassemble -output-asm-variant=%d' % (' '.join(args), syntax_id)
+  cmd = 'echo %s | llvm-mc x86_64-unknown-unknown --show-encoding %d' % (' '.join(args), syntax_id)
   stdout = subprocess.check_output(cmd, shell=True)
   return stdout.decode('utf8')
 

@@ -184,7 +184,19 @@ struct pmc_counters {
   uint64_t context_switches;
 };
 
-// return counters
+// Writes Code_to_test unroll_factor times to the run_test function
+/**
+ * @brief Writes Code_to_test unroll_factor times to the run_test function
+ *
+ * @param code_to_test char* Binary of the Code that is to be tested.
+ * @param code_size unsigned long Size of the code to be tested in Bytes.
+ * @param unroll_factor unsigned int number of consecutive writes of code.
+ * @param l1_read_supported int* Pointer for returned L1_read Values.
+ * @param l1_write_supported int* Pointer for returned L1_write Values.
+ * @param icache_supported int* Pointer for returned icache_miss Values
+ * @param shm_fd int File descriptor of the shared memory.
+ * @return struct pmc_counters* Performance Counters
+ */
 struct pmc_counters *measure(
     char *code_to_test,
     unsigned long code_size,
@@ -297,7 +309,7 @@ struct pmc_counters *measure(
     unsigned long total_code_size =
       code_size * unroll_factor + end_tmpl_size + SIZE_OF_REL_JUMP;
 
-    // unprotect the test harness 
+    // unprotect the test harness
     // so that we can emit instructions to use
     // the proper pmc index
     char *begin = round_to_page_start(code_begin);
@@ -313,10 +325,11 @@ struct pmc_counters *measure(
     emit_mov_rcx(icache_misses_a, icache_misses_idx);
     emit_mov_rcx(icache_misses_b, icache_misses_idx);
 
-    // copy the *unrolled* user code 
+    // copy the *unrolled* user code
     unsigned char *code_dest = code_end;
     int i;
     for (i = 0; i < unroll_factor; i++) {
+    printf("Code Dest: %p\n", code_dest);
       memcpy(code_dest, code_to_test, code_size);
       code_dest += code_size;
     }

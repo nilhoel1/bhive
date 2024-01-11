@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
   int l1_read_supported, l1_write_supported, icache_supported;
   struct pmc_counters *counters = measure(
       code_to_test, code_size, unroll_factor,
-      &l1_read_supported, &l1_write_supported, &icache_supported, 
+      &l1_read_supported, &l1_write_supported, &icache_supported,
       shm_fd);
 
 
