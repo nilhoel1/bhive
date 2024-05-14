@@ -7,13 +7,14 @@
     {
       "type": "lldb",
       "request": "launch",
-      "name": "Debug",
+      "name": "dbg: cflush (%rdx)",
       "program": "timing-harness/test",
       "args": [
-        "50",
+        "0fae3c",
         "100"
       ],
-      "cwd": "${workspaceFolder}"
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "build"
     }
   ]
 }

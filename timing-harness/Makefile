@@ -1,13 +1,13 @@
 .PHONY: all clean
 
 ifeq ($(NDEBUG), 1)
-DEBUG_FLAG = -DNDEBUG=1
+DEBUG_FLAG = -DNDEBUG=1 -g -O0 -DDEBUG
 else
 DEBUG_FLAG =
 endif
 
 CC = gcc
-CFLAGS = $(DEBUG_FLAG)
+CFLAGS = $(DEBUG_FLAG) -g -O0 -DDEBUG
 
 all: test
 

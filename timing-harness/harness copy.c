@@ -1,3 +1,4 @@
+#include "harness.h"
 #define _GNU_SOURCE
 
 #include <assert.h>
@@ -164,13 +165,13 @@ int is_event_supported(struct perf_event_attr *attr) {
 // handling up to these many faults from child process
 #define MAX_FAULTS 1024
 
-struct pmc_counters {
-  uint64_t core_cyc;
-  uint64_t l1_read_misses;
-  uint64_t l1_write_misses;
-  uint64_t icache_misses;
-  uint64_t context_switches;
-};
+// struct pmc_counters {
+//   uint64_t core_cyc;
+//   uint64_t l1_read_misses;
+//   uint64_t l1_write_misses;
+//   uint64_t icache_misses;
+//   uint64_t context_switches;
+// };
 
 uint8_t parse_hex_digit(char c) {
   if (c >= 'a' && c <= 'f')
@@ -192,6 +193,20 @@ uint8_t *hex2bin(char *hex) {
   }
   return bin;
 }
+
+uint8_t *imm_for_clflush(char *imm) {
+  size_t len = strlen(imm);
+  assert(len % 2 == 0);
+  // flip the bytes
+  char flipped_imm[len];
+  size_t j;
+  for (j = 0; j < len; j++) {
+    flipped_imm[j] = imm[len - j - 1];
+  }
+  printf("flipped_imm: %s\n", flipped_imm);
+  return hex2bin(flipped_imm);
+}
+
 // Writes Code_to_test unroll_factor times to the run_test function
 /**
  * @brief Writes Code_to_test unroll_factor times to the run_test function
@@ -336,25 +351,10 @@ struct pmc_counters *measure(char *code_to_test, unsigned long code_size,
     int i;
     char clflush_raw[] = "0fae3c"; //"0fae3c25df414000";
     char *clflush = hex2bin(clflush_raw);
-    size_t clflush_size = strlen(clflush) / 2;
-
+    size_t clflush_size = strlen(clflush_raw) / 2;
+    imm_for_clflush(clflush_raw);
     printf("clflush_raw: %s\n", clflush_raw);
     printf("clflush: %p\n", clflush);
-
-    //START
-    unsigned char *in = code_dest;
-    size_t len = strlen(in);
-    assert(len % 2 == 0);
-    // flip the bytes
-    char flipped_imm[len];
-    size_t j;
-    for (j = 0; j < len; j++) {
-      flipped_imm[j] = in[len - j - 1];
-    }
-    printf("imm: %p\n", in);
-    printf("flipped_imm: %p\n", flipped_imm);
-    char *imm = hex2bin(flipped_imm);
-    // END
 
     for (i = 0; i < unroll_factor; i++) {
       // printf("code_dest: %p\n", code_dest);

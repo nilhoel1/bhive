@@ -1,48 +1,56 @@
 #define _GNU_SOURCE
 
+#include <assert.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/mman.h>
+#include <sys/ptrace.h>
+#include <sys/syscall.h>
 #include <sys/types.h>
 #include <sys/user.h>
-#include <sys/ptrace.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <sys/mman.h>
 #include <sys/wait.h>
-#include <stdint.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <string.h>
-#include <stdlib.h>
-#include <sys/syscall.h>
-#include <assert.h>
+#include <unistd.h>
 
 #include "harness.h"
 
-uint8_t parse_hex_digit(char c) {
-  if (c >= 'a' && c <= 'f')
-    return c - 'a' + 0xa;
-  if (c >= 'A' && c <= 'F')
-    return c - 'A' + 0xa;
-  return c - '0';
-}
+// uint8_t parse_hex_digit(char c) {
+//   if (c >= 'a' && c <= 'f')
+//     return c - 'a' + 0xa;
+//   if (c >= 'A' && c <= 'F')
+//     return c - 'A' + 0xa;
+//   return c - '0';
+// }
 
-uint8_t *hex2bin(char *hex) {
-  size_t len = strlen(hex);
-  assert(len % 2 == 0);
-  uint8_t *bin = (uint8_t *)malloc(len / 2);
-  size_t i;
-  for (i = 0; i  < len/2; i++) {
-    uint8_t hi = parse_hex_digit(hex[i*2]);
-    uint8_t lo = parse_hex_digit(hex[i*2 + 1]);
-    bin[i] = hi * 16 + lo;
-  }
-  return bin;
-}
+// uint8_t *hex2bin(char *hex) {
+//   size_t len = strlen(hex);
+//   assert(len % 2 == 0);
+//   uint8_t *bin = (uint8_t *)malloc(len / 2);
+//   size_t i;
+//   for (i = 0; i  < len/2; i++) {
+//     uint8_t hi = parse_hex_digit(hex[i*2]);
+//     uint8_t lo = parse_hex_digit(hex[i*2 + 1]);
+//     bin[i] = hi * 16 + lo;
+//   }
+//   return bin;
+// }
 
 int main(int argc, char **argv) {
   char *code_hex = argv[1];
   unsigned int unroll_factor = atoi(argv[2]);
-  size_t code_size = strlen(code_hex)/2;
+  size_t code_size = strlen(code_hex) / 2;
   char *code_to_test = hex2bin(code_hex);
+  char clflush_raw[] = "0fae3c"; //"0fae3c25df414000";
+  char *clflush_bin = hex2bin(clflush_raw);
+  size_t clflush_size = strlen(clflush_raw) / 2;
+
+  printf("clflush_raw: %s\n", clflush_raw);
+  printf("code_hex: %s\n", code_hex);
+  printf("clflush: %p\n", clflush_bin);
+  printf("code_to_test: %p\n", code_to_test);
 
   // allocate 3 pages, the first one for testing
   // the rest for writing down result
@@ -50,11 +58,9 @@ int main(int argc, char **argv) {
 
   // `measure` writes the result here
   int l1_read_supported, l1_write_supported, icache_supported;
-  struct pmc_counters *counters = measure(
-      code_to_test, code_size, unroll_factor,
-      &l1_read_supported, &l1_write_supported, &icache_supported,
-      shm_fd);
-
+  struct pmc_counters *counters =
+      measure(code_to_test, code_size, unroll_factor, &l1_read_supported,
+              &l1_write_supported, &icache_supported, shm_fd);
 
   if (!counters) {
     fprintf(stderr, "failed to run test\n");
@@ -62,15 +68,15 @@ int main(int argc, char **argv) {
   }
 
   // print the result, ignore the first set of counters, which is garbage
-  printf("Core_cyc\tL1_read_misses\tL1_write_misses\tiCache_misses\tContext_switches\n");
+  printf("Core_cyc\tL1_read_misses\tL1_write_misses\tiCache_misses\tContext_"
+         "switches\n");
   int i;
   for (i = 1; i < HARNESS_ITERS; i++) {
-    printf("%ld\t%ld\t%ld\t%ld\t%ld\n",
-        counters[i].core_cyc,
-        l1_read_supported ? counters[i].l1_read_misses : -1,
-        l1_write_supported ? counters[i].l1_write_misses : -1,
-        icache_supported ? counters[i].icache_misses : -1,
-        counters[i].context_switches);
+    printf("%ld\t\t\t%ld\t\t%ld\t\t%ld\t\t%ld\n", counters[i].core_cyc,
+           l1_read_supported ? counters[i].l1_read_misses : -1,
+           l1_write_supported ? counters[i].l1_write_misses : -1,
+           icache_supported ? counters[i].icache_misses : -1,
+           counters[i].context_switches);
   }
 
   return 0;
