@@ -1,10 +1,6 @@
 #!/bin/bash
 
-CLANG_VER="clang-18.1.4"
-LLVM_VER="llvm-18.1.4"
-CMAKE_VER="cmake-18.1.4"
-LLVMORG_VER="llvmorg-18.1.4"
-
+VER="18.1.4"
 
 rele() {
   cd build || exit
@@ -24,13 +20,13 @@ rele() {
     -DLLVM_PARALLEL_LINK_JOBS=1 \
     -DLLVM_EXTERNAL_HARNESS_SOURCE_DIR=../llvm-harness \
     -DLLVM_EXTERNAL_PROJECTS="harness" \
-    ../dependencies/$LLVM_VER.src
+    ../dependencies/llvm-$VER.src
   mv compile_commands.json ../compile_commands.json
 }
 
 build() {
   cd build || exit
-  ninja
+  ninja -k 100
   cd ..
 }
 
@@ -48,16 +44,16 @@ cl() {
 }
 
 getllvm() {
-  if [ ! -d dependencies/$LLVM_VER.src ]; then
+  if [ ! -d dependencies/llvm-$VER.src ]; then
     while true; do
-      echo "Do you wish to install $LLVM_VER [Y/N]?"
+      echo "Do you wish to install llvm-$VER [Y/N]?"
       read -r yn
       case $yn in
       [Yy]*)
         cd dependencies || exit
-        wget https://github.com/llvm/llvm-project/releases/download/$LLVMORG_VER/$LLVM_VER.src.tar.xz
-        tar -xf $LLVM_VER.src.tar.xz
-        rm $LLVM_VER.src.tar.xz
+        wget https://github.com/llvm/llvm-project/releases/download/llvmorg-$VER/llvm-$VER.src.tar.xz
+        tar -xf llvm-$VER.src.tar.xz
+        rm llvm-$VER.src.tar.xz
         cd ..
         break
         ;;
@@ -66,24 +62,24 @@ getllvm() {
       esac
     done
   else
-    echo "It seems $LLVM_VER is already checked out!"
+    echo "It seems llvm-$VER is already checked out!"
     echo "If that is not the case please remove the folder and try again."
   fi
 }
 
 getcmake() {
-  if [ ! -f dependencies/$CMAKE_VER ]; then
+  if [ ! -f dependencies/cmake-$VER ]; then
     while true; do
-      echo "Do you wish to install $CMAKE_VER , which is neede to build llvm and clang [Y/N]?"
+      echo "Do you wish to install cmake-$VER , which is neede to build llvm and clang [Y/N]?"
       read -r yn
       case $yn in
       [Yy]*)
         cd dependencies || exit
-        wget https://github.com/llvm/llvm-project/releases/download/$LLVMORG_VER/$CMAKE_VER.src.tar.xz
-        tar -xf $CMAKE_VER.src.tar.xz
-        rm $CMAKE_VER.src.tar.xz
-        mv $CMAKE_VER.src cmake
-        touch $CMAKE_VER
+        wget https://github.com/llvm/llvm-project/releases/download/llvmorg-$VER/cmake-$VER.src.tar.xz
+        tar -xf cmake-$VER.src.tar.xz
+        rm cmake-$VER.src.tar.xz
+        mv cmake-$VER.src cmake
+        touch cmake-$VER
         cd ..
         break
         ;;
@@ -92,23 +88,23 @@ getcmake() {
       esac
     done
   else
-    echo "It seems $CMAKE_VER is already checked out!"
+    echo "It seems cmake-$VER is already checked out!"
     echo "If that is not the case please remove the folder and try again."
   fi
 }
 
 getclang() {
-  if [ ! -d dependencies/$CLANG_VER.src ]; then
+  if [ ! -d dependencies/clang-$VER.src ]; then
     while true; do
       echo ""
-      echo "Do you wish to install $CLANG_VER [Y/N]?"
+      echo "Do you wish to install clang-$VER [Y/N]?"
       read -r yn
       case $yn in
       [Yy]*)
         cd dependencies || exit
-        wget https://github.com/llvm/llvm-project/releases/download/$LLVMORG_VER/$CLANG_VER.src.tar.xz
-        tar -xf $CLANG_VER.src.tar.xz
-        rm $CLANG_VER.src.tar.xz
+        wget https://github.com/llvm/llvm-project/releases/download/llvmorg-$VER/clang-$VER.src.tar.xz
+        tar -xf clang-$VER.src.tar.xz
+        rm clang-$VER.src.tar.xz
         cd ..
         break
         ;;
@@ -117,7 +113,7 @@ getclang() {
       esac
     done
   else
-    echo "It seems $CLANG_VER is already checked out!"
+    echo "It seems clang-$VER is already checked out!"
     echo "If that is not the case please remove the folder and try again."
   fi
 }
