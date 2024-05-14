@@ -22,6 +22,8 @@ rele() {
     -DLLVM_INCLUDE_TESTS=OFF \
     -GNinja \
     -DLLVM_PARALLEL_LINK_JOBS=1 \
+    -DLLVM_EXTERNAL_HARNESS_SOURCE_DIR=../llvm-harness \
+    -DLLVM_EXTERNAL_PROJECTS="harness" \
     ../dependencies/$LLVM_VER.src
   mv compile_commands.json ../compile_commands.json
 }
@@ -81,7 +83,7 @@ getcmake() {
         tar -xf $CMAKE_VER.src.tar.xz
         rm $CMAKE_VER.src.tar.xz
         mv $CMAKE_VER.src cmake
-        touch $CMAKE_VER.src
+        touch $CMAKE_VER
         cd ..
         break
         ;;
@@ -123,7 +125,7 @@ getclang() {
 pre() {
   getllvm
   getcmake
-  getclang
+  #getclang
   BUILD_DIR="build/"
   if [ ! -d "$BUILD_DIR" ]; then
     mkdir build
