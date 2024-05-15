@@ -20,7 +20,7 @@ struct pmc_counters {
 };
 
 struct pmc_counters *measure(
-    char *code_to_test,
+    unsigned char *code_to_test,
     unsigned long code_size,
     unsigned int unroll_factor,
     int *l1_read_supported,
@@ -30,13 +30,13 @@ struct pmc_counters *measure(
 
 uint8_t parse_hex_digit(char c);
 
-uint8_t *hex2bin(char *hex);
+uint8_t *hex2bin(unsigned char *hex);
 
 uint8_t *imm_for_clflush(char *imm) {
   size_t len = strlen(imm);
   assert(len % 2 == 0);
   // flip the bytes
-  char flipped_imm[len];
+  unsigned char flipped_imm[len];
   size_t j;
   for (j = 0; j < len; j++) {
     flipped_imm[j] = imm[len - j - 1];

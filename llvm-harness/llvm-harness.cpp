@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-//#include "../timing-harness/harness.h"
+#include "timing-harness/harness.h"
 
 #include "llvm/MC/MCAsmBackend.h"
 #include "llvm/MC/MCAsmInfo.h"
