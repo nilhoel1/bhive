@@ -40,6 +40,7 @@
 #include "llvm/Support/WithColor.h"
 #include "llvm/TargetParser/Host.h"
 
+#include <stdint.h>
 #include <string>
 
 using namespace llvm;
@@ -107,11 +108,7 @@ static cl::opt<bool>
                      cl::desc("Preserve Comments in outputted assembly"),
                      cl::cat(MCCategory));
 
-enum OutputFileType {
-  OFT_Null,
-  OFT_AssemblyFile,
-  OFT_ObjectFile
-};
+enum OutputFileType { OFT_Null, OFT_AssemblyFile, OFT_ObjectFile };
 static cl::opt<OutputFileType>
     FileType("filetype", cl::init(OFT_AssemblyFile),
              cl::desc("Choose an output file type:"),
@@ -238,8 +235,8 @@ static const Target *GetTarget(const char *ProgName) {
 
   // Get the target specific parser.
   std::string Error;
-  const Target *TheTarget = TargetRegistry::lookupTarget(ArchName, TheTriple,
-                                                         Error);
+  const Target *TheTarget =
+      TargetRegistry::lookupTarget(ArchName, TheTriple, Error);
   if (!TheTarget) {
     WithColor::error(errs(), ProgName) << Error;
     return nullptr;
@@ -250,8 +247,8 @@ static const Target *GetTarget(const char *ProgName) {
   return TheTarget;
 }
 
-static std::unique_ptr<ToolOutputFile> GetOutputStream(StringRef Path,
-    sys::fs::OpenFlags Flags) {
+static std::unique_ptr<ToolOutputFile>
+GetOutputStream(StringRef Path, sys::fs::OpenFlags Flags) {
   std::error_code EC;
   auto Out = std::make_unique<ToolOutputFile>(Path, EC, Flags);
   if (EC) {
@@ -275,13 +272,12 @@ static void setDwarfDebugFlags(int argc, char **argv) {
 
 static std::string DwarfDebugProducer;
 static void setDwarfDebugProducer() {
-  if(!getenv("DEBUG_PRODUCER"))
+  if (!getenv("DEBUG_PRODUCER"))
     return;
   DwarfDebugProducer += getenv("DEBUG_PRODUCER");
 }
 
-static int AsLexInput(SourceMgr &SrcMgr, MCAsmInfo &MAI,
-                      raw_ostream &OS) {
+static int AsLexInput(SourceMgr &SrcMgr, MCAsmInfo &MAI, raw_ostream &OS) {
 
   AsmLexer Lexer(MAI);
   Lexer.setBuffer(SrcMgr.getMemoryBuffer(SrcMgr.getMainFileID())->getBuffer());
@@ -298,7 +294,7 @@ static int AsLexInput(SourceMgr &SrcMgr, MCAsmInfo &MAI,
 }
 
 static int fillCommandLineSymbols(MCAsmParser &Parser) {
-  for (auto &I: DefineSymbol) {
+  for (auto &I : DefineSymbol) {
     auto Pair = StringRef(I).split('=');
     auto Sym = Pair.first;
     auto Val = Pair.second;
@@ -322,8 +318,7 @@ static int AssembleInput(const char *ProgName, const Target *TheTarget,
                          SourceMgr &SrcMgr, MCContext &Ctx, MCStreamer &Str,
                          MCAsmInfo &MAI, MCSubtargetInfo &STI,
                          MCInstrInfo &MCII, MCTargetOptions const &MCOptions) {
-  std::unique_ptr<MCAsmParser> Parser(
-      createMCAsmParser(SrcMgr, Ctx, Str, MAI));
+  std::unique_ptr<MCAsmParser> Parser(createMCAsmParser(SrcMgr, Ctx, Str, MAI));
   std::unique_ptr<MCTargetAsmParser> TAP(
       TheTarget->createMCAsmParser(STI, *Parser, MCII, MCOptions));
 
@@ -334,7 +329,7 @@ static int AssembleInput(const char *ProgName, const Target *TheTarget,
   }
 
   int SymbolResult = fillCommandLineSymbols(*Parser);
-  if(SymbolResult)
+  if (SymbolResult)
     return SymbolResult;
   Parser->setShowParsedOperands(ShowInstOperands);
   Parser->setTargetParser(*TAP);
@@ -345,6 +340,50 @@ static int AssembleInput(const char *ProgName, const Target *TheTarget,
   int Res = Parser->Run(NoInitialTextSection);
 
   return Res;
+}
+
+int test(char *code_hex, unsigned int unroll_factor) {
+  // char *code_hex = argv[1];
+  // unsigned int unroll_factor = atoi(argv[2]);
+  size_t code_size = strlen(code_hex) / 2;
+  uint8_t *code_to_test = hex2bin((unsigned char *)code_hex);
+  char clflush_raw[] = "0fae3c"; //"0fae3c25df414000";
+  uint8_t *clflush_bin = hex2bin((unsigned char *)clflush_raw);
+  size_t clflush_size = strlen(clflush_raw) / 2;
+
+  printf("clflush_raw: %s\n", clflush_raw);
+  printf("code_hex: %s\n", code_hex);
+  printf("clflush: %p\n", clflush_bin);
+  printf("code_to_test: %p\n", code_to_test);
+
+  // allocate 3 pages, the first one for testing
+  // the rest for writing down result
+  int shm_fd = create_shm_fd("shm-path");
+
+  // `measure` writes the result here
+  int l1_read_supported, l1_write_supported, icache_supported;
+  struct pmc_counters *counters =
+      measure(code_to_test, code_size, unroll_factor, &l1_read_supported,
+              &l1_write_supported, &icache_supported, shm_fd);
+
+  if (!counters) {
+    fprintf(stderr, "failed to run test\n");
+    return 1;
+  }
+
+  // print the result, ignore the first set of counters, which is garbage
+  printf("Core_cyc\tL1_read_misses\tL1_write_misses\tiCache_misses\tContext_"
+         "switches\n");
+  int i;
+  for (i = 1; i < HARNESS_ITERS; i++) {
+    printf("%ld\t\t\t%ld\t\t%ld\t\t%ld\t\t%ld\n", counters[i].core_cyc,
+           l1_read_supported ? counters[i].l1_read_misses : -1,
+           l1_write_supported ? counters[i].l1_write_misses : -1,
+           icache_supported ? counters[i].icache_misses : -1,
+           counters[i].context_switches);
+  }
+
+  return 0;
 }
 
 int main(int argc, char **argv) {
@@ -362,7 +401,7 @@ int main(int argc, char **argv) {
   cl::HideUnrelatedOptions({&MCCategory, &getColorCategory()});
   cl::ParseCommandLineOptions(argc, argv, "llvm machine code playground\n");
   MCTargetOptions MCOptions = mc::InitMCTargetOptionsFromFlags();
-  //MCOptions.CompressDebugSections = CompressDebugSections.getValue();
+  // MCOptions.CompressDebugSections = CompressDebugSections.getValue();
 
   setDwarfDebugFlags(argc, argv);
   setDwarfDebugProducer();
@@ -598,14 +637,15 @@ int main(int argc, char **argv) {
     break;
   }
   if (disassemble)
-    // Res = Disassembler::disassemble(*TheTarget, TripleName, *STI, *Str, *Buffer,
+    // Res = Disassembler::disassemble(*TheTarget, TripleName, *STI, *Str,
+    // *Buffer,
     //                                 SrcMgr, Ctx, MCOptions);
 
-  // Keep output if no errors.
-  if (Res == 0) {
-    Out->keep();
-    if (DwoOut)
-      DwoOut->keep();
-  }
+    // Keep output if no errors.
+    if (Res == 0) {
+      Out->keep();
+      if (DwoOut)
+        DwoOut->keep();
+    }
   return Res;
 }

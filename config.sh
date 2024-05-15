@@ -7,7 +7,7 @@ rele() {
   cmake \
     -DCMAKE_C_COMPILER=gcc \
     -DCMAKE_CXX_COMPILER=g++ \
-    -DCMAKE_BUILD_TYPE=MinSizeRel \
+    -DCMAKE_BUILD_TYPE=Debug \
     -DCMAKE_EXPORT_COMPILE_COMMANDS=1 \
     -Wno-dev \
     -Wno-suggest-override \
@@ -16,12 +16,13 @@ rele() {
     -DLLVM_ENABLE_EH=ON \
     -DLLVM_INCLUDE_BENCHMARKS=OFF \
     -DLLVM_INCLUDE_TESTS=OFF \
+    -DLLVM_OPTIMIZED_TABLEGEN=ON \
     -GNinja \
     -DLLVM_PARALLEL_LINK_JOBS=1 \
     -DLLVM_EXTERNAL_HARNESS_SOURCE_DIR=../llvm-harness \
     -DLLVM_EXTERNAL_PROJECTS="harness" \
     ../dependencies/llvm-$VER.src
-  mv compile_commands.json ../compile_commands.json
+  cp compile_commands.json ../compile_commands.json
 }
 
 build() {

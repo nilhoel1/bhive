@@ -7,11 +7,11 @@
     {
       "type": "lldb",
       "request": "launch",
-      "name": "dbg: cflush (%rdx)",
-      "program": "timing-harness/test",
+      "name": "dbg: clfsh.S)",
+      "program": "build/bin/harness",
       "args": [
-        "0fae3c",
-        "100"
+        "--show-encoding",
+        "playground/clfsh.S",
       ],
       "cwd": "${workspaceFolder}",
       "preLaunchTask": "build"
