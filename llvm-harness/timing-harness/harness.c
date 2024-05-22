@@ -205,7 +205,7 @@ uint8_t *hex2bin(char *hex) {
  * @param shm_fd int File descriptor of the shared memory.
  * @return struct pmc_counters* Performance Counters
  */
-struct pmc_counters *measure(char *code_to_test, unsigned long code_size,
+struct pmc_counters *measure(unsigned char *code_to_test, unsigned long code_size,
                              unsigned int unroll_factor, int *l1_read_supported,
                              int *l1_write_supported, int *icache_supported,
                              int shm_fd) {

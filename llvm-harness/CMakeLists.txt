@@ -23,16 +23,15 @@ set(LLVM_LINK_COMPONENTS
 message (STATUS "${PROJECT_BINARY_DIR}$")
 message (STATUS "${PROJECT_SOURCE_DIR}$")
 
-set_source_files_properties(foo.cpp PROPERTIES COMPILE_FLAGS -f elf64 -O0)
+#set_source_files_properties(run_test.nasm PROPERTIES COMPILE_FLAGS -f elf64 -O0)
 
 add_llvm_tool(harness
   llvm-harness.cpp
   Disassembler.cpp
   timing-harness/rdpmc.c
   timing-harness/harness.c
+  timing-harness/harness.h
   timing-harness/run_test.nasm
   )
 
-#add_subdirectory(timing-harness)
-
-target_link_libraries(harness PRIVATE ${llvm_libs})
+target_link_libraries(harness PRIVATE ${llvm_libs} )

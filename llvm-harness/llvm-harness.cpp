@@ -11,7 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "timing-harness/harness.h"
+extern "C" {
+  #include "timing-harness/harness.h"
+}
 
 #include "llvm/MC/MCAsmBackend.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -346,9 +348,9 @@ int test(char *code_hex, unsigned int unroll_factor) {
   // char *code_hex = argv[1];
   // unsigned int unroll_factor = atoi(argv[2]);
   size_t code_size = strlen(code_hex) / 2;
-  uint8_t *code_to_test = hex2bin((unsigned char *)code_hex);
+  uint8_t *code_to_test = hex2bin(code_hex);
   char clflush_raw[] = "0fae3c"; //"0fae3c25df414000";
-  uint8_t *clflush_bin = hex2bin((unsigned char *)clflush_raw);
+  uint8_t *clflush_bin = hex2bin(clflush_raw);
   size_t clflush_size = strlen(clflush_raw) / 2;
 
   printf("clflush_raw: %s\n", clflush_raw);
@@ -647,5 +649,6 @@ int main(int argc, char **argv) {
       if (DwoOut)
         DwoOut->keep();
     }
+  test("0fae3a", 100);
   return Res;
 }
